@@ -9,11 +9,18 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain_community.llms import HuggingFaceHub
 import os
+
+# Environmental variables
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = ''
+os.environ["LLM"] = 'google/flan-t5-xxl'
+os.environ["MAX_LENGTH"] = '64'
+os.environ["EMB_MODEL"] = 'all-MiniLM-L6-v2'
+os.environ["CHUNK_SIZE"] = '200'
+os.environ["CHUNK_OVERLAP"] = '10'
 
 llm = HuggingFaceHub(
-    repo_id="google/flan-t5-xxl", 
-    model_kwargs={"temperature": 0.5, "max_length": 64})
+    repo_id=os.environ.get("LLM"), 
+    model_kwargs={"temperature": 0.5, "max_length": int(os.environ.get("MAX_LENGTH"))})
 
 template = """
 Try to answer the Question based on the Context.
@@ -24,7 +31,7 @@ Answer:"""
 prompt = PromptTemplate.from_template(template)
 llm_chain = LLMChain(prompt=prompt, llm=llm)
 
-embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+embedding_model = HuggingFaceEmbeddings(model_name=os.environ.get("EMB_MODEL"))
 
 def read_pdf(file_contents):
     try:
@@ -39,7 +46,7 @@ def read_pdf(file_contents):
 
 def chunking(doc_text):
     try:
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size = 200, chunk_overlap = 10,
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size = int(os.environ.get("CHUNK_SIZE")), chunk_overlap = int(os.environ.get("CHUNK_OVERLAP")),
                                                        length_function = len)
         chunks = text_splitter.split_text(doc_text)
         return chunks
@@ -53,13 +60,20 @@ def vectorize_text(pdf_chunks):
 
 def main():
     # UI
-    st.set_page_config(page_title="documentQA")
-    st.title("Document Q&A")
-    st.caption("Document Q&A is designed to respond comprehensively to questions posed about the provided document, regardless of the section from which the questions originate.")
+    st.set_page_config(page_title="inquiry")
+    st.title("Document Inquiry Tool")
+    st.caption("Document Inquiry Tool is designed to respond comprehensively to questions posed about the provided document, regardless of the section from which the questions originate.")
     st.subheader("Step 1 - Upload the Document")
 
     # File uploader
     uploaded_file = st.file_uploader("Choose a file", type=["pdf"])
+    pdf_chunks = []
+
+    # Initialize session state
+    if 'db' not in st.session_state:
+        st.session_state.db = None
+    if "pdf_chunks" not in st.session_state:
+        st.session_state.pdf_chunks = []
 
     if uploaded_file is not None:
         # Read PDF content
@@ -75,22 +89,38 @@ def main():
 
         # Chunking
         with st.spinner("Chunking..."):
-            pdf_chunks = chunking(pdf_texts)
-            pdf_chunks = list(map(lambda x: Document(x), pdf_chunks))
+            if st.session_state.pdf_chunks == []:
+                st.session_state.pdf_chunks = chunking(pdf_texts)
+                st.session_state.pdf_chunks = list(map(lambda x: Document(x), st.session_state.pdf_chunks))
 
         # Vectorizing
         with st.spinner("Indexing into DB..."):
-            db = FAISS.from_documents(pdf_chunks, embedding_model)
+            if st.session_state.db is None:
+                st.session_state.db = FAISS.from_documents(st.session_state.pdf_chunks, embedding_model)
 
         # Section for user query
         st.subheader("Step 2 - Ask a Question")
         user_query = st.text_area("Type your question here", height=100)
-        topn = db.similarity_search(user_query, fetch_k=5)
+        topn = st.session_state.db.similarity_search(user_query, fetch_k=5)
 
         # Fetch Answer Button
         if st.button("Find Answer"):
             with st.spinner("Generating..."):
                 st.success(llm_chain.run({"question": user_query, "context":topn}))
+    else:
+        # Reset the DB
+        ids = []
+        for i in range(len(st.session_state.pdf_chunks)):
+            try:
+                ids.append(st.session_state.db.index_to_docstore_id[i])
+            except:
+                break
+        try:
+            st.session_state.db.delete(ids)
+        except Exception as e:
+            pass
+        st.session_state.pdf_chunks = []
+        st.session_state.db = None
 
 if __name__ == '__main__':
     main()
