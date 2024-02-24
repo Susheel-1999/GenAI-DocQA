@@ -26,14 +26,20 @@ DocumentQA is designed to respond comprehensively to questions posed about the p
 
 # About Techniques:
 Langchain is a framework for developing applications powered by language models. It enables applications that are context-aware and reason.
-1. **Chunking process** - It is parameterized by a list of characters. It tries to split on them in order until the chunks are small enough. The default list is ["\n\n", "\n", " ", ""]. This has the effect of trying to keep all paragraphs (and then sentences, and then words) together as long as possible, as those would generically seem to be the strongest semantically related pieces of text.<br>```from langchain.text_splitter import RecursiveCharacterTextSplitter```<br>
-2. **Integration of Hugging Face Models and Embeddings** - Langchain seamlessly incorporates and provides access to Hugging Face models and embeddings. Users can leverage the following functionalities.
+1. **Chunking process** - It is parameterized by a list of characters. It tries to split on them in order until the chunks are small enough. The default list is ["\n\n", "\n", " ", ""]. This has the effect of trying to keep all paragraphs (and then sentences, and then words) together as long as possible, as those would generically seem to be the strongest semantically related pieces of text.<br>```from langchain.text_splitter import RecursiveCharacterTextSplitter```<br><br>
+   **Types of chunking:**<br>
+     i) _Character Text Splitter_ - Splitting text based on the characters. <br>
+     ii) _Recursive Character Text character_ -Text is split based on sequences of characters. This method is particularly effective for retaining the structure of paragraphs and sentences.<br>
+     iii) _Document Based Splitter_ - Text is split based on the structure of documents. This approach caters to specific document formats, such as Python-based documents, HTML, markup, and more.<br>
+     iv) _Semantic Chunking_ - Aims to identify points in the text where sentence similarity varies significantly (potentially with a threshold while considering the following sentence). These identified points serve as separators for creating meaningful chunks.<br>
+
+3. **Integration of Hugging Face Models and Embeddings** - Langchain seamlessly incorporates and provides access to Hugging Face models and embeddings. Users can leverage the following functionalities.
    <br>_Emebeddings:_  ```from langchain_community.embeddings import HuggingFaceEmbeddings```
    <br>_LLMs:_  ```from langchain_community.llms import HuggingFaceHub```
-3. **Integration of VectorDB** - Langchain seamlessly incorporates and provides supports for many VectorDB (example: FAISS). <br> ```from langchain_community.vectorstores import FAISS```
-4. **Schema** - Class for storing a piece of text and associated metadata. TO conver <br> ```from langchain.schema import Document```
-5. **Prompt Template** - A template of a prompt can be easily designed with the help of the PromptTemplate class.<br> ```from langchain.prompts import PromptTemplate```
-6. **LLM chain** - The LLMChain class is used to execute the PromptTemplate. <br> ```from langchain.chains import LLMChain```
+4. **Integration of VectorDB** - Langchain seamlessly incorporates and provides supports for many VectorDB (example: FAISS). <br> ```from langchain_community.vectorstores import FAISS```
+5. **Schema** - Class for storing a piece of text and associated metadata. TO conver <br> ```from langchain.schema import Document```
+6. **Prompt Template** - A template of a prompt can be easily designed with the help of the PromptTemplate class.<br> ```from langchain.prompts import PromptTemplate```
+7. **LLM chain** - The LLMChain class is used to execute the PromptTemplate. <br> ```from langchain.chains import LLMChain```
 
 ## Why Reterival Augmented Technique for Question Answering Task or any task?:
 1. **Technique 1: Stuff** <br> Uses ALL of the text from the documents in the prompt.  It actually doesn’t work in Scenario where the data exceeds the token limit and causes rate-limiting errors.
