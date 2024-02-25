@@ -1,5 +1,5 @@
-# GenAI-Document QA
-DocumentQA is designed to respond comprehensively to questions posed about the provided document, regardless of the section from which the questions originate.
+# GenAI-Document Q&A
+Document Q&A is designed to respond comprehensively to questions posed about the provided document, regardless of the section from which the questions originate.
 
 # Steps to run Streamlit app:
 1. To create a Hugging face user access tokens or use an existing one, visit: https://huggingface.co/settings/tokens.
@@ -32,14 +32,16 @@ Langchain is a framework for developing applications powered by language models.
      ii) _Recursive Character Text character_ -Text is split based on sequences of characters. This method is particularly effective for retaining the structure of paragraphs and sentences.<br>
      iii) _Document Based Splitter_ - Text is split based on the structure of documents. This approach caters to specific document formats, such as Python-based documents, HTML, markup, and more.<br>
      iv) _Semantic Chunking_ - Aims to identify points in the text where sentence similarity varies significantly (potentially with a threshold while considering the following sentence). These identified points serve as separators for creating meaningful chunks.<br>
-
-3. **Integration of Hugging Face Models and Embeddings** - Langchain seamlessly incorporates and provides access to Hugging Face models and embeddings. Users can leverage the following functionalities.
+2. **Integration of Hugging Face Models and Embeddings** - Langchain seamlessly incorporates and provides access to Hugging Face models and embeddings. Users can leverage the following functionalities.
    <br>_Emebeddings:_  ```from langchain_community.embeddings import HuggingFaceEmbeddings```
    <br>_LLMs:_  ```from langchain_community.llms import HuggingFaceHub```
-4. **Integration of VectorDB** - Langchain seamlessly incorporates and provides supports for many VectorDB (example: FAISS). <br> ```from langchain_community.vectorstores import FAISS```
-5. **Schema** - Class for storing a piece of text and associated metadata. TO conver <br> ```from langchain.schema import Document```
-6. **Prompt Template** - A template of a prompt can be easily designed with the help of the PromptTemplate class.<br> ```from langchain.prompts import PromptTemplate```
-7. **LLM chain** - The LLMChain class is used to execute the PromptTemplate. <br> ```from langchain.chains import LLMChain```
+3. **Integration of VectorDB** - Langchain seamlessly incorporates and provides supports for many VectorDB (example: FAISS). <br> ```from langchain_community.vectorstores import FAISS```
+4. **Schema** - Class for storing a piece of text and associated metadata. TO conver <br> ```from langchain.schema import Document```
+5. **Prompt Template** - A template of a prompt can be easily designed with the help of the PromptTemplate class.<br> ```from langchain.prompts import PromptTemplate```
+6. **LLM chain** - The LLMChain class is used to execute the PromptTemplate. <br> ```from langchain.chains import LLMChain```
+
+Streamlit is an open-source Python library that makes it easy to create and share beautiful, custom web apps for machine learning and data science. In just a few minutes we can build and deploy powerful data apps. 
+1. **Session State** - Session State is a way to share variables between reruns, for each user session.
 
 ## Why Reterival Augmented Technique for Question Answering Task or any task?:
 1. **Technique 1: Stuff** <br> Uses ALL of the text from the documents in the prompt.  It actually doesn’t work in Scenario where the data exceeds the token limit and causes rate-limiting errors.
@@ -54,5 +56,7 @@ _**Steps involved:**_ <br>
   iii. Data Augmentation and Prompt Engineering <br>
   iv. Querying <br>
 
-
-
+# Reference:
+Langchain - https://python.langchain.com/docs/get_started/introduction  <br>
+OpenAI - https://platform.openai.com/docs/introduction <br>
+Streamlit - https://docs.streamlit.io/library/api-reference/session-state
