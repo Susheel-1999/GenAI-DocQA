@@ -33,13 +33,15 @@ llm_chain = LLMChain(prompt=prompt, llm=llm)
 
 embedding_model = HuggingFaceEmbeddings(model_name=os.environ.get("EMB_MODEL"))
 
-def read_pdf(file_contents):
+def read_pdf(files):
     try:
-        reader = PdfReader(file_contents)
-        pdf_texts = [p.extract_text().strip() for p in reader.pages]
-        pdf_texts = [text for text in pdf_texts if text]
-        pdf_texts = "\n\n".join(pdf_texts)
-        return pdf_texts
+        all_pdf_texts = ""
+        for file_contents in files:
+            reader = PdfReader(file_contents)
+            pdf_texts = [p.extract_text().strip() for p in reader.pages]
+            pdf_texts = [text for text in pdf_texts if text]
+            all_pdf_texts += "\n\n".join(pdf_texts)
+        return all_pdf_texts
     except Exception as e:
         print("Error faced in Read PDF -",e)
         return ""
@@ -51,7 +53,7 @@ def chunking(doc_text):
         chunks = text_splitter.split_text(doc_text)
         return chunks
     except Exception as e:
-        prnt("Error faced in Chunking -",e)
+        print("Error faced in Chunking -",e)
         return doc_text
 
 def vectorize_text(pdf_chunks):
@@ -66,37 +68,41 @@ def main():
     st.subheader("Step 1 - Upload the Document")
 
     # File uploader
-    uploaded_file = st.file_uploader("Choose a file", type=["pdf"])
+    uploaded_files = st.file_uploader("Choose a file", type=["pdf"], accept_multiple_files=True)
     pdf_chunks = []
+    rerun_switch = False
 
     # Initialize session state
+    if "ip_files" not in st.session_state:
+        st.session_state.ip_files = []
+        st.session_state.pdf_texts = ""
     if 'db' not in st.session_state:
         st.session_state.db = None
     if "pdf_chunks" not in st.session_state:
         st.session_state.pdf_chunks = []
 
-    if uploaded_file is not None:
-        # Read PDF content
-        file_contents = uploaded_file.read()
-        file_contents = io.BytesIO(file_contents)
-        
+    if uploaded_files != []:
         with st.spinner("Reading the file..."):
-            pdf_texts = read_pdf(file_contents)
+            if st.session_state.ip_files != uploaded_files:
+                st.session_state.ip_files = uploaded_files
+                st.session_state.pdf_texts = read_pdf(uploaded_files)
+                rerun_switch = True # to reindex with all new files
 
         # Collapsible section for Preview
         with st.expander("click here to see the document content", expanded=False):
-            st.text_area("Document Content Preview", pdf_texts, height=400)
+            st.text_area("Document Content Preview", st.session_state.pdf_texts, height=400)
 
         # Chunking
         with st.spinner("Chunking..."):
-            if st.session_state.pdf_chunks == []:
-                st.session_state.pdf_chunks = chunking(pdf_texts)
+            if st.session_state.pdf_chunks == [] or rerun_switch:
+                st.session_state.pdf_chunks = chunking(st.session_state.pdf_texts)
                 st.session_state.pdf_chunks = list(map(lambda x: Document(x), st.session_state.pdf_chunks))
 
         # Vectorizing
         with st.spinner("Indexing into DB..."):
-            if st.session_state.db is None:
+            if st.session_state.db is None or rerun_switch:
                 st.session_state.db = FAISS.from_documents(st.session_state.pdf_chunks, embedding_model)
+                rerun_switch = False
 
         # Section for user query
         st.subheader("Step 2 - Ask a Question")
@@ -106,7 +112,7 @@ def main():
         # Fetch Answer Button
         if st.button("Find Answer"):
             with st.spinner("Generating..."):
-                st.success(llm_chain.run({"question": user_query, "context":topn}))
+                st.success(llm_chain.run({"question": user_query, "context": topn}))
     else:
         # Reset the DB
         ids = []
