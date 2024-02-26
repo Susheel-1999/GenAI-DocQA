@@ -18,9 +18,9 @@ Document Q&A is designed to respond comprehensively to questions posed about the
 ```streamlit run app.py```
 
 # Workflow:
-1. Upload a PDF file. It will take little time to load. At backend, it will process, read, chunk and index the pdf file.
+1. Upload one or more PDF files. It will take little time to load. At backend, it will process, read, chunk and index the pdf files.
 2. We can able to see the preview of the content. Expand to look into the content.
-3. Ask the question that we have to know from the document.
+3. Ask the question that we have to know from the documents.
 
 **Quick start:** https://huggingface.co/spaces/susheel-1999/documentQA
 
