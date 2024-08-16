@@ -12,15 +12,17 @@ import os
 
 # Environmental variables
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = ''
-os.environ["LLM"] = 'google/flan-t5-xxl'
 os.environ["MAX_LENGTH"] = '64'
 os.environ["EMB_MODEL"] = 'all-MiniLM-L6-v2'
 os.environ["CHUNK_SIZE"] = '200'
 os.environ["CHUNK_OVERLAP"] = '10'
 
-llm = HuggingFaceHub(
-    repo_id=os.environ.get("LLM"), 
-    model_kwargs={"temperature": 0.5, "max_length": int(os.environ.get("MAX_LENGTH"))})
+model_list = ['google/flan-t5-small', 'google/flan-t5-base', 'google/flan-t5-large']
+
+def get_llm(model_name):
+    llm = HuggingFaceHub(repo_id=model_name,
+                        model_kwargs={"temperature": 0.5, "max_length": int(os.environ.get("MAX_LENGTH"))})
+    return llm
 
 template = """
 Try to answer the Question based on the Context.
@@ -29,7 +31,6 @@ Question: {question}
 Answer:"""
 
 prompt = PromptTemplate.from_template(template)
-llm_chain = LLMChain(prompt=prompt, llm=llm)
 
 embedding_model = HuggingFaceEmbeddings(model_name=os.environ.get("EMB_MODEL"))
 
@@ -106,6 +107,11 @@ def main():
 
         # Section for user query
         st.subheader("Step 2 - Ask a Question")
+        
+        model_name = st.selectbox("Select the LLM model:", model_list)
+        llm = get_llm(model_name)
+        llm_chain = LLMChain(prompt=prompt, llm=llm)
+                
         user_query = st.text_area("Type your question here", height=100)
         topn = st.session_state.db.similarity_search(user_query, fetch_k=5)
 
